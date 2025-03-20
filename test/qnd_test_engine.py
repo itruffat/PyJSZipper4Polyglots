@@ -32,20 +32,26 @@ def run_script(command):
         return str(e)
 
 
-def compare_outputs(test_path):
+def compare_outputs(test_path, test_lua):
     success = []
     failure = {}
     py_files = get_script_files(test_path, ".py")
     js_files = get_script_files(test_path, ".js")
+    lua_files = get_script_files(test_path, ".lua")
 
     common_files = py_files.intersection(js_files)
+
+    if test_lua:
+        common_files = common_files.intersection(lua_files)
 
     for file in sorted(common_files):
         with tempfile.NamedTemporaryFile(mode='w+', suffix=".txt", delete=False) as temp_file:
             py_path = os.path.join(test_path, file + '.py')
             js_path = os.path.join(test_path, file + '.js')
+            lua_path = os.path.join(test_path, file + '.lua') if test_lua else ''
+            template = "templates/" + ("lua_" if test_lua else "" ) + "zipped.template"
 
-            answer = create_zipper(py_path, js_path, "templates/zipped.template", False)
+            answer = create_zipper(py_path, js_path,lua_path, template)
             temp_file.write(answer)
             temp_file.flush()
 
@@ -53,8 +59,19 @@ def compare_outputs(test_path):
             py_output_zipped = run_script(f"python3 {temp_file.name}")
             js_output = run_script(f"node {js_path}")
             js_output_zipped = run_script(f"node {temp_file.name}")
+            lua_output = py_output
+            lua_output_zipped = py_output
 
-            truths = [py_output == py_output_zipped, js_output == js_output_zipped, py_output == js_output]
+            if test_lua:
+                lua_output = run_script(f"lua {lua_path}")
+                lua_output_zipped = run_script(f"lua {temp_file.name}")
+
+            truths = [py_output == py_output_zipped,
+                      js_output == js_output_zipped,
+                      py_output == js_output,
+                      lua_output == py_output,
+                      lua_output == lua_output_zipped]
+
 
         if all(truths):
             success.append(file)
@@ -68,28 +85,37 @@ def compare_outputs(test_path):
             if not truths[2]:
                 failure[file] += "\n" if len(failure[file]) > 0 else ""
                 failure[file] += f"POLYGLOT MISMATCH FOUND: \nPYTHON\n\n{py_output}\n\nJAVASCRIPT\n\n{js_output}"
+            if not truths[3]:
+                failure[file] += "\n" if len(failure[file]) > 0 else ""
+                failure[file] += f"POLYGLOT MISMATCH FOUND: \nPYTHON\n\n{py_output}\n\nLUA\n\n{lua_output}"
+            if not truths[4]:
+                failure[file] += f"LUA MISMATCH FOUND: \nORIGINAL\n\n{lua_output}\n\nZIPPED\n\n{lua_output_zipped}"
     return success, failure
 
 
 
 if __name__ == "__main__":
-    sys.stdout.write("Starting test\n------------\n")
-    success, failure = compare_outputs("test/cases")
     error_code = 0
-    if len(success) > 0:
-        sys.stdout.write("SUCCESS:\n")
-        for case in success:
-            sys.stdout.write(f"* {case}\n")
-        sys.stdout.write("...\n")
-    sys.stdout.flush()
-    if len(failure) > 0:
-        sys.stderr.write("FAILURE:\n")
-        error_code = 1
-        for case in failure:
-            sys.stderr.write(f"* {case}\n")
-            sys.stderr.write(f"{failure[case]}\n")
-    sys.stderr.flush()
-    sys.stdout.write("------------\nTest finished\n")
+    for with_lua in [False, True]:
+        print(">>>>>>>>>>>>>>>>")
+        print("> Testing Lua >" if with_lua else "> Testing PY+JS >")
+        print(">>>>>>>>>>>>>>>>")
+        sys.stdout.write("Starting test\n------------\n")
+        success, failure = compare_outputs("test/cases", with_lua)
+        if len(success) > 0:
+            sys.stdout.write("SUCCESS:\n")
+            for case in success:
+                sys.stdout.write(f"* {case}\n")
+            sys.stdout.write("...\n")
+        sys.stdout.flush()
+        if len(failure) > 0:
+            sys.stderr.write("FAILURE:\n")
+            error_code = 1
+            for case in failure:
+                sys.stderr.write(f"* {case}\n")
+                sys.stderr.write(f"{failure[case]}\n")
+        sys.stderr.flush()
+        sys.stdout.write("------------\nTest finished\n")
     exit(error_code)
 
 
