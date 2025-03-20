@@ -1,6 +1,7 @@
 1 // len("""
 <JS CODE>
-/*""") <DIVISION>
+/*""")
+<DIVISION>
 <PYTHON CODE>
 """
 *///"""

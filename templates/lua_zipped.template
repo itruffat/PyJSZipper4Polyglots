@@ -1,11 +1,13 @@
 _ = 1
---_ // 1 + len("""
+--_ // len("""
 --_ /* 
 _=nil
 <LUA CODE>
---[===[ */ delete _ <DIVISION>
+--[===[ */ delete _
+<DIVISION>
 { <JS CODE> } /*""")
-del _ <DIVISION> 
+del _
+<DIVISION>
 <PYTHON CODE>
 """ ]===]
 -- */ //"""

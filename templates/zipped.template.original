@@ -1,17 +1,11 @@
 1 // len("""
 /*""")
-
 <PYTHON CODE>
-
 """
 *///"""
-
 <DIVISION>
-
 1 // len("""
-
 <JS CODE>
-
 //""")
 
 

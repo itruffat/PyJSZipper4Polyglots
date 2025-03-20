@@ -71,7 +71,7 @@ def create_zipper(python_file, js_file, lua_file, template_file):
             else:
                 js_code = ''
 
-            js_code = js_code.replace('"""', '""\\x22')
+            js_code = js_code.replace('"""', '\\x22\\x22\\x22')
             js_code = js_code.replace(']===]', ']=\\x3D=]')
             code.append(current_part.replace("<JS CODE>", js_code))
 
@@ -82,7 +82,7 @@ def create_zipper(python_file, js_file, lua_file, template_file):
             else:
                 lua_code = ''
 
-            lua_code = lua_code.replace('"""', '""\\x22')
+            lua_code = lua_code.replace('"""', '\\x22\\x22\\x22')
             lua_code = lua_code.replace("*/", "\\x2A/")
             code.append(current_part.replace("<LUA CODE>", lua_code))
 
