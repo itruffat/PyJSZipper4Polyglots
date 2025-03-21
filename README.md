@@ -17,7 +17,7 @@ In the end I also added LUA to the equation, having 2 different templates.
 
 -----
 
-## Idea behind the answer (PY+JS)
+## Idea behind the original answer (PY+JS)
 
 The idea is to use comments, strings and NOPs (operations that do nothing, like evaluating a number) to mask the 
 execution. A double `//` is a comment in javascript but a natural division in Python, so `1 // len("""` is the 
@@ -84,7 +84,7 @@ code inside `main.py` takes care of it.
 
 -----
 
-## Idea behind the answer (LUA)
+## Adding a third language (LUA)
 
 So, first let's try to understand the tools we have at our disposal. 
 
@@ -95,7 +95,7 @@ starts with `--[===[`and ends with `]===]`. This means that `]===]`, an invalid 
 one we use to handle.
 
 Having to manipulate 3 languages at once, there are some new complexities to take into account. The techniques we were 
-using previously are no longer, and we need to thread more carefully. While Python would allow a sentence such as 
+using previously are no longer enough, and we need to thread more carefully. While Python would allow a sentence such as 
 `1 -- 1 // len("""` , neither LUA nor Javascript can accept such a sentance. 
 
 * LUA requires each sentence to **either be comments or do something**, so we can no longer relay on expressions that 
@@ -191,10 +191,74 @@ so having it defined could be a problem. In all 3 programs we deleted the variab
    * `delete` in Javascript, as well as placing the code inside `{}`.
       * The latter avoids problems with `consts`.
 
+-----
+
+## Going beyond with a fourth language (Ruby)
+
+### Introduction
+
+This one was harder to do than the previous one by a country-mile. Combining 2 languages was easy-ish, 3 languages was a
+head-scratcher, but 4 languages was  challenge. Still, it was worth going through it until we could find a solution.
+
+The risky part is that languages sometimes change, for example python 3.10 removed a lot of 'hack-ish' ways of working 
+that would have been really useful for this task. Therefore, this solution is as-is with current versions of 
+interpreters (as of 22/3/2025). It may break in the future
+
+    _=1
+    __={}
+    --_ ; "#{#1+1}" ; 1 // 1 and """
+    --_ || //}"
+    --_ ; `false && ${/*}`
+    _=#__--[===[
+    1
+    <RUBY CODE>
+    =begin
+    <DIVISION>
+    """
+    <PYTHON CODE>
+    """
+    <DIVISION>
+    */1}`;{
+    <JS CODE>
+    };`${/*
+    <DIVISION>
+    #]===]
+    <LUA CODE>
+    --[===[
+    =end
+    #]===]
+    --_; `false && ${_*/1}`
+    --_ ; "#{#1+1}" ; 1 //
+    _=--_ && //}"""
+    1
+
+This solution mostly abuses String-Interpolation, and their different implementations. Since no two languages use the 
+same token delimiters to make String-Interpolation, opening string interpolation allows us to write comment markers
+(either `#` or `/*`) that will be interpreted by the other language as being part of a string.
+
+One particular hurdle to overcome was that JS does it's String-Interpolation inside backsticks (` `` `), which can not
+be used on Python or LUA, and which is interpreted as a SYSTEM-CALL by Ruby. 
+
+* The former can simply be solved by first making sure that neither language are reading the lines with backsticks.
+  Not a trivial task, but easy enough with LUA being skippable every line by using `--_;` and Python skipping whole
+  paragraphs using multines comments `"""`.
+
+
+* The latter requires a bit of knowledge of the SYSTEM-CALL itself. Since on my SYSTEM the SYSTEM-CALL tries to run from
+  BASH, I simply had to find a way to make the comment part be ignored. Options were adding a comment token (`#`) or 
+  doing an statement that will overload (`false && <x>`). Ended up choosing the latter, as it looks more resilient to
+  different terminals with different comment tokens.
+
+
+## Advance ideas
+
+
+'TBD'
 
 ------
 
 ## TODO (maybe)
 
 * Add same test cases, replace the test engine for a real one.
-* Add other languages. (will have to check compatibility)
+* Modify main to also populate ruby.
+* Add explanation in details for ruby

@@ -91,6 +91,7 @@ def create_zipper(python_file, js_file, lua_file, template_file):
 
     return ''.join(code)
 
+
 if __name__ == "__main__":
     py_path, js_path, output = get_input()
     answer = create_zipper(py_path, js_path, "", "templates/zipped.template.original")
