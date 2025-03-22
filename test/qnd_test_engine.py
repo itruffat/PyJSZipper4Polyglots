@@ -32,26 +32,41 @@ def run_script(command):
         return str(e)
 
 
-def compare_outputs(test_path, test_lua):
+def compare_outputs(test_path, test_lua, test_ruby):
+    assert(not test_ruby or test_lua)
+
     success = []
     failure = {}
+
     py_files = get_script_files(test_path, ".py")
     js_files = get_script_files(test_path, ".js")
     lua_files = get_script_files(test_path, ".lua")
+    ruby_files = get_script_files(test_path, ".rb")
 
     common_files = py_files.intersection(js_files)
 
     if test_lua:
         common_files = common_files.intersection(lua_files)
 
+    if test_ruby:
+        common_files = common_files.intersection(ruby_files)
+
     for file in sorted(common_files):
         with tempfile.NamedTemporaryFile(mode='w+', suffix=".txt", delete=False) as temp_file:
             py_path = os.path.join(test_path, file + '.py')
             js_path = os.path.join(test_path, file + '.js')
             lua_path = os.path.join(test_path, file + '.lua') if test_lua else ''
-            template = "templates/" + ("lua_" if test_lua else "" ) + "zipped.template"
+            ruby_path = os.path.join(test_path, file + '.rb') if test_ruby else ''
 
-            answer = create_zipper(py_path, js_path,lua_path, template)
+            template = "templates/"
+            if test_ruby:
+                template += "four.zipped.template"
+            elif test_lua:
+                template += "three.zipped.template"
+            else:
+                template += "two.zipped.template"
+
+            answer = create_zipper(py_path, js_path,lua_path, ruby_path, template)
             temp_file.write(answer)
             temp_file.flush()
 
@@ -61,17 +76,25 @@ def compare_outputs(test_path, test_lua):
             js_output_zipped = run_script(f"node {temp_file.name}")
             lua_output = py_output
             lua_output_zipped = py_output
+            ruby_output = py_output
+            ruby_output_zipped = py_output
 
             if test_lua:
                 lua_output = run_script(f"lua {lua_path}")
                 lua_output_zipped = run_script(f"lua {temp_file.name}")
 
+            if test_ruby:
+                ruby_output = run_script(f"ruby {ruby_path}")
+                ruby_output_zipped = run_script(f"ruby {temp_file.name}")
+
             truths = [py_output == py_output_zipped,
                       js_output == js_output_zipped,
                       py_output == js_output,
                       lua_output == py_output,
-                      lua_output == lua_output_zipped]
-
+                      lua_output == lua_output_zipped,
+                      ruby_output == py_output,
+                      ruby_output == ruby_output_zipped
+                      ]
 
         if all(truths):
             success.append(file)
@@ -89,7 +112,15 @@ def compare_outputs(test_path, test_lua):
                 failure[file] += "\n" if len(failure[file]) > 0 else ""
                 failure[file] += f"POLYGLOT MISMATCH FOUND: \nPYTHON\n\n{py_output}\n\nLUA\n\n{lua_output}"
             if not truths[4]:
+                failure[file] += "\n" if len(failure[file]) > 0 else ""
                 failure[file] += f"LUA MISMATCH FOUND: \nORIGINAL\n\n{lua_output}\n\nZIPPED\n\n{lua_output_zipped}"
+            if not truths[5]:
+                failure[file] += "\n" if len(failure[file]) > 0 else ""
+                failure[file] += f"POLYGLOT MISMATCH FOUND: \nPYTHON\n\n{py_output}\n\nRUBY\n\n{ruby_output}"
+            if not truths[6]:
+                failure[file] += "\n" if len(failure[file]) > 0 else ""
+                failure[file] += f"RUBY MISMATCH FOUND: \nORIGINAL\n\n{ruby_output}\n\nZIPPED\n\n{ruby_output_zipped}"
+
     return success, failure
 
 
@@ -97,25 +128,33 @@ def compare_outputs(test_path, test_lua):
 if __name__ == "__main__":
     error_code = 0
     for with_lua in [False, True]:
-        print(">>>>>>>>>>>>>>>>")
-        print("> Testing Lua >" if with_lua else "> Testing PY+JS >")
-        print(">>>>>>>>>>>>>>>>")
-        sys.stdout.write("Starting test\n------------\n")
-        success, failure = compare_outputs("test/cases", with_lua)
-        if len(success) > 0:
-            sys.stdout.write("SUCCESS:\n")
-            for case in success:
-                sys.stdout.write(f"* {case}\n")
-            sys.stdout.write("...\n")
-        sys.stdout.flush()
-        if len(failure) > 0:
-            sys.stderr.write("FAILURE:\n")
-            error_code = 1
-            for case in failure:
-                sys.stderr.write(f"* {case}\n")
-                sys.stderr.write(f"{failure[case]}\n")
-        sys.stderr.flush()
-        sys.stdout.write("------------\nTest finished\n")
+        for with_ruby in [False, True]:
+            if with_ruby and not with_lua:
+                continue
+            print(">>>>>>>>>>>>>>>>")
+            if with_ruby:
+                print("> Testing ruby >")
+            elif with_lua:
+                print("> Testing Lua >")
+            else:
+                print("> Testing PY+JS >")
+            print(">>>>>>>>>>>>>>>>")
+            sys.stdout.write("Starting test\n------------\n")
+            success, failure = compare_outputs("test/cases", with_lua, with_ruby)
+            if len(success) > 0:
+                sys.stdout.write("SUCCESS:\n")
+                for case in success:
+                    sys.stdout.write(f"* {case}\n")
+                sys.stdout.write("...\n")
+            sys.stdout.flush()
+            if len(failure) > 0:
+                sys.stderr.write("FAILURE:\n")
+                error_code = 1
+                for case in failure:
+                    sys.stderr.write(f"* {case}\n")
+                    sys.stderr.write(f"{failure[case]}\n")
+            sys.stderr.flush()
+            sys.stdout.write("------------\nTest finished\n")
     exit(error_code)
 
 
