@@ -104,10 +104,6 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
             else:
                 ruby_code = ''
 
-            #ruby_code = ruby_code.replace('"""', '\\x22\\x22\'+\'\\x22')
-
-
-
             # Remove stacked empty comments
             previous_ruby_code = ""
             while previous_ruby_code != ruby_code:
@@ -169,13 +165,13 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
                 [])
 
             # Replace JS end, at the end of a regex
-            # TODO: look for an alternative to this
+            # TODO: look for an alternative to this, as this kills equality between 2 equal regexes
             ruby_code, _ = reformat_strings_and_replace_tokens(
                 ruby_code, "ruby",
                 '*/',
                 "*",
                 '*/',
-                '*{0,}/',
+                '{0,}/',
                 False,
                 [])
 
