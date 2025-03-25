@@ -3,6 +3,7 @@ import subprocess
 import sys
 import tempfile
 
+
 if (cwd := os.getcwd()) not in sys.path:
     sys.path.insert(0, cwd) # Ensures that will run from the place the project is being called 
     if (script_path := os.path.dirname(os.path.abspath(__file__))) in sys.path:
@@ -125,7 +126,7 @@ def compare_outputs(test_path, test_lua, test_ruby):
 
 
 
-if __name__ == "__main__":
+def four_language_templates_test(_exit):
     error_code = 0
     for with_lua in [False, True]:
         for with_ruby in [False, True]:
@@ -155,6 +156,71 @@ if __name__ == "__main__":
                     sys.stderr.write(f"{failure[case]}\n")
             sys.stderr.flush()
             sys.stdout.write("------------\nTest finished\n")
-    exit(error_code)
+    if _exit:
+        exit(error_code)
+    else:
+        return error_code
 
+
+def double_test():
+    print("::::::::::::::::")
+    print(">>>>>>>>>>>>>>>>")
+    print("> Testing Double Compilation >")
+    new_file = create_zipper(
+        "test/cases/edgecases.py",
+        "test/cases/edgecases.js",
+        "test/cases/edgecases.lua",
+        "test/cases/edgecases.rb",
+        "templates/four.zipped.template")
+
+    with tempfile.NamedTemporaryFile(mode='w+', suffix=".js", delete=True) as temp_file:
+            temp_file.write(new_file)
+            temp_file.flush()
+            new_file2 = create_zipper(
+                temp_file.name,
+                temp_file.name,
+                temp_file.name,
+                temp_file.name,
+                "templates/four.zipped.template")
+
+    with tempfile.NamedTemporaryFile(mode='w+', suffix=".js", delete=True) as temp_file:
+        temp_file.write(new_file2)
+        temp_file.flush()
+        py_output = run_script(f"python3 test/cases/edgecases.py")
+        py_output_zipped = run_script(f"python3 {temp_file.name}")
+        js_output_zipped = run_script(f"node {temp_file.name}")
+        lua_output_zipped = run_script(f"lua {temp_file.name}")
+        ruby_output_zipped = run_script(f"ruby {temp_file.name}")
+
+        truths = [
+            py_output_zipped == py_output,
+            js_output_zipped == py_output,
+            lua_output_zipped == py_output,
+            ruby_output_zipped == py_output
+        ]
+
+        if all(truths):
+            print("Double compilion successful!")
+        else:
+            print("Double compiling the solution fails")
+            exit(3)
+        print(">>>>>")
+        exit(0)
+
+
+if __name__ == "__main__":
+    if len(sys.argv) <= 1:
+        error_code = four_language_templates_test(False)
+        if error_code:
+            exit(error_code)
+        double_test()
+    else:
+        if sys.argv[1] == "python":
+            print(create_zipper("test/cases/edgecases.py","","","","test/faux_templates/python.template"))
+        if sys.argv[1] == "javascript":
+            print(create_zipper("","test/cases/edgecases.js","","","test/faux_templates/js.template"))
+        if sys.argv[1] == "lua":
+            print(create_zipper("","","test/cases/edgecases.lua","","test/faux_templates/lua.template"))
+        if sys.argv[1] == "ruby":
+            print(create_zipper("","","","test/cases/edgecases.rb","test/faux_templates/ruby.template"))
 

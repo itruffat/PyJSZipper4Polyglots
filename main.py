@@ -1,6 +1,8 @@
 import argparse
 import sys
 
+from misc.syntax_checker import generic_token_replacement, reformat_strings_and_replace_tokens
+
 def get_input():
     parser = argparse.ArgumentParser(description="Process two files into one.")
     parser.add_argument("python_file", nargs="?", help="Path to the python file")
@@ -42,7 +44,7 @@ def profile_template(template_file):
     sorted_profile = [l for _,l in sorted([(n,l) for l,n in profile.items()])]
    
     return sorted_profile
-        
+
 
 def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
@@ -51,6 +53,7 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
     with open(template_file, "r") as template:
         template_str = template.read()
 
+    ruby_token = "ruby_long_string" if "ruby" in profile else ""
     parts = template_str.split("<DIVISION>")
 
     code = []
@@ -66,7 +69,9 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
             python_code = python_code.replace("*/", "\\x2A/")
             python_code = python_code.replace(']===]', ']=\\x3D=]')
+            python_code = generic_token_replacement(python_code, "py", ruby_token)
             code.append(current_part.replace("<PYTHON CODE>", python_code))
+
 
         elif language == "javascript":
             if js_file != '':
@@ -77,6 +82,7 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
             js_code = js_code.replace('"""', '\\x22\\x22\\x22')
             js_code = js_code.replace(']===]', ']=\\x3D=]')
+            js_code = generic_token_replacement(js_code, "javascript", ruby_token)
             code.append(current_part.replace("<JS CODE>", js_code))
 
         elif language == "lua":
@@ -88,6 +94,7 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
             lua_code = lua_code.replace('"""', '\\x22\\x22\\x22')
             lua_code = lua_code.replace("*/", "\\x2A/")
+            lua_code = generic_token_replacement(lua_code, "lua", ruby_token)
             code.append(current_part.replace("<LUA CODE>", lua_code))
 
         elif language == "ruby":
@@ -97,9 +104,84 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
             else:
                 ruby_code = ''
 
+            #ruby_code = ruby_code.replace('"""', '\\x22\\x22\'+\'\\x22')
+
+
+
+            # Remove stacked empty comments
+            previous_ruby_code = ""
+            while previous_ruby_code != ruby_code:
+                previous_ruby_code = ruby_code
+                # From left
+                ruby_code, _ = reformat_strings_and_replace_tokens(
+                    ruby_code, "ruby",
+                    '"""',
+                    '2"""',
+                    '"""',
+                    '""+"',
+                    False,
+                    [])
+
+                # From right
+                ruby_code, _ = reformat_strings_and_replace_tokens(
+                    ruby_code, "ruby",
+                    '"""',
+                    '"""2',
+                    '"""',
+                    '"+""',
+                    False,
+                    [])
+
+            # Remove triple quotes inside single quotes
+            ruby_code, _ = reformat_strings_and_replace_tokens(
+                    ruby_code, "ruby",
+                    '"""',
+                    "'",
+                    '"""',
+                    '\"\'+\'\"\'+\'\"',
+                    False,
+                    [])
+
+            # Replace triple quotes inside strings
             ruby_code = ruby_code.replace('"""', '\\x22\\x22\\x22')
-            ruby_code = ruby_code.replace("*/", "\\x2A/")
+
+            # Replace Lua end, inside single quotes
+            ruby_code, _ = reformat_strings_and_replace_tokens(
+                    ruby_code, "ruby",
+                    ']===]',
+                    "'",
+                    ']===]',
+                    ']==\'+\'=]',
+                    False,
+                    [])
+
+            # Replace Lua end, inside strings
             ruby_code = ruby_code.replace(']===]', ']=\\x3D=]')
+
+            # Replace JS end, inside single quotes
+            ruby_code, _ = reformat_strings_and_replace_tokens(
+                ruby_code, "ruby",
+                '*/',
+                "'/",
+                '*/',
+                '*\'+\'/',
+                False,
+                [])
+
+            # Replace JS end, at the end of a regex
+            # TODO: look for an alternative to this
+            ruby_code, _ = reformat_strings_and_replace_tokens(
+                ruby_code, "ruby",
+                '*/',
+                "*",
+                '*/',
+                '*{0,}/',
+                False,
+                [])
+
+            # Replace JS end, inside Strings
+            ruby_code = ruby_code.replace("*/", "\\x2A/")
+
             code.append(current_part.replace("<RUBY CODE>", ruby_code))
 
         else:
@@ -109,14 +191,14 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
 
 if __name__ == "__main__":
-    py_path, js_path, lua_file, ruby_file, output = get_input()
+    py_path, js_path, l_file, r_file, output = get_input()
 
-    if len(lua_file) == 0 or lua_file in ['""',"''"]:
-        answer = create_zipper(py_path, js_path, lua_file, ruby_file,"templates/two.zipped.template")
-    elif len(ruby_file) == 0 or ruby_file in ['""', "''"]:
-        answer = create_zipper(py_path, js_path, lua_file, ruby_file, "templates/three.zipped.template")
+    if len(l_file) == 0 or l_file in ['""',"''"]:
+        answer = create_zipper(py_path, js_path, l_file, r_file,"templates/two.zipped.template")
+    elif len(r_file) == 0 or r_file in ['""', "''"]:
+        answer = create_zipper(py_path, js_path, l_file, r_file, "templates/three.zipped.template")
     else:
-        answer = create_zipper(py_path, js_path, lua_file, ruby_file, "templates/four.zipped.template")
+        answer = create_zipper(py_path, js_path, l_file, r_file, "templates/four.zipped.template")
 
     with open(output, "w") if output else sys.stdout as out_file:
         out_file.write(answer)
