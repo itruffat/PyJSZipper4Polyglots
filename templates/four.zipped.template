@@ -5,18 +5,26 @@ __={}
 --_ || `false && ${/*}`
 _=#__--[===[
 1
+_ = nil
+__ = nil
 <RUBY CODE>
 <<-ruby_long_string
 <DIVISION>
 """
+del _
+del __
 <PYTHON CODE>
 """
 <DIVISION>
 */1}`
-{ <JS CODE> }
+{ delete _
+delete __
+<JS CODE> }
 `${/*
 <DIVISION>
 #]===]
+_=nil
+__=nil
 <LUA CODE>
 --[===[
 ruby_long_string
@@ -25,4 +33,3 @@ ruby_long_string
 --_ || "#{#" ; 1 //
 _=--_ && //}"""
 1
-

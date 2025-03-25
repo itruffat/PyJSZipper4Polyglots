@@ -246,18 +246,26 @@ For this we will go the other way around, start with the solution and trace our 
     --_ || `false && ${/*}`
     _=#__--[===[
     1
+    _ = nil
+    __ = nil
     <RUBY CODE>
     <<-ruby_long_string
     <DIVISION>
     """
+    del _
+    del __
     <PYTHON CODE>
     """
     <DIVISION>
     */1}`
-    { <JS CODE> }
+    { delete _
+    delete __
+    <JS CODE> }
     `${/*
     <DIVISION>
     #]===]
+    _=nil
+    __=nil
     <LUA CODE>
     --[===[
     ruby_long_string
@@ -512,6 +520,4 @@ weird enough to consider skipping it.
 
 ## TODO (maybe)
 
-* Add same test cases, replace the test engine for a real one.
-* It might be possible to remove the ";" for "||" values in the last template. (Check)
-* Fix Python issues with `"""` inside its own comments.
+* Add a 5th language if feeling brave enough.
