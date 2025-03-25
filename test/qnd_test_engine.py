@@ -126,7 +126,7 @@ def compare_outputs(test_path, test_lua, test_ruby):
 
 
 
-def four_language_templates_test(_exit):
+def four_language_templates_test():
     error_code = 0
     for with_lua in [False, True]:
         for with_ruby in [False, True]:
@@ -156,10 +156,7 @@ def four_language_templates_test(_exit):
                     sys.stderr.write(f"{failure[case]}\n")
             sys.stderr.flush()
             sys.stdout.write("------------\nTest finished\n")
-    if _exit:
-        exit(error_code)
-    else:
-        return error_code
+    return error_code
 
 
 def double_test():
@@ -203,17 +200,17 @@ def double_test():
             print("Double compilion successful!")
         else:
             print("Double compiling the solution fails")
-            exit(3)
+            return 3
         print(">>>>>")
-        exit(0)
+        return 0
 
 
 if __name__ == "__main__":
     if len(sys.argv) <= 1:
-        error_code = four_language_templates_test(False)
-        if error_code:
-            exit(error_code)
-        double_test()
+        error_code = four_language_templates_test()
+        if not error_code:
+            error_code = double_test()
+        exit(error_code)
     else:
         if sys.argv[1] == "python":
             print(create_zipper("test/cases/edgecases.py","","","","test/faux_templates/python.template"))
@@ -223,4 +220,11 @@ if __name__ == "__main__":
             print(create_zipper("","","test/cases/edgecases.lua","","test/faux_templates/lua.template"))
         if sys.argv[1] == "ruby":
             print(create_zipper("","","","test/cases/edgecases.rb","test/faux_templates/ruby.template"))
+        if sys.argv[1] == "four":
+            print(create_zipper("test/cases/edgecases.py",
+                                "test/cases/edgecases.js",
+                                "test/cases/edgecases.lua",
+                                "test/cases/edgecases.rb",
+                                "templates/four.zipped.template")
+                  )
 

@@ -1,7 +1,6 @@
 # Python/JS Zipper for Polyglots
 (A Zipper tool to create Python/JScript/LUA/Ruby Polyglots)
 
-
 # Introduction
 
 Inspired by [this youtube video](https://www.youtube.com/watch?v=dbf9e7okjm8), I decided to tackle the problem of 
@@ -14,6 +13,26 @@ common syntax that would work for both languages and solve the problem using tha
 zipper.
 
 In the end I also added LUA and Ruby to the equation, having 3 different templates.
+
+# How to Use
+
+    Pythone main.ppy <Python File> <Js File> <Lua File> <RubyFile>
+
+> If you want to run only Python/JS or only Python/Js/Lua you can do the following...
+
+    Pythone main.ppy <Python File> <Js File> <Lua File> ''
+    Pythone main.ppy <Python File> <Js File> '' ''
+
+## Goals
+
+The goal of this repo is to be as straight-forward and use as little `eval`/`exec`/`;` as possible. Additionally, the 
+code bases should be callable with as little restrictions as possible. 
+
+The creation of the output file should be the one to the care of most edge cases, meaning that most programs should run
+ok. Some exceptions are to be expected, for example all self-referencing files are going to fail, and files that use
+`exec` or `eval` may fail as well. Additionally, some Ruby regex may fail their identity function after creation. All 
+these are considered acceptable looses.
+
 
 -----
 
@@ -219,15 +238,16 @@ interpreters (as of 22/3/2025).  It may break in the future, no promises there.
 For this we will go the other way around, start with the solution and trace our way back.
 
 #### :: Final Solution 
+
     _=1
     __={}
-    --_ ; "#{#"  ; 1 // 1 and """
-    --_ || //}"
+    --_ * "#{#"  * 1 // 1 if False else """"
+    --_ || //}".to_i
     --_ || `false && ${/*}`
     _=#__--[===[
     1
     <RUBY CODE>
-    =begin
+    <<-ruby_long_string
     <DIVISION>
     """
     <PYTHON CODE>
@@ -240,7 +260,7 @@ For this we will go the other way around, start with the solution and trace our 
     #]===]
     <LUA CODE>
     --[===[
-    =end
+    ruby_long_string
     #]===]
     --_ || `false && ${_*/1}`
     --_ || "#{#" ; 1 //
@@ -312,6 +332,16 @@ will be read as the following.
     --_ ; "#{#" ; 1 // 1 and """
     <IGNORED BY PYTHON>
      """
+
+Finally, we can then improve this answer further by adding a multiplication and a `to_i`, allowing Ruby to understand 
+the values as numbers. Since Python will now have problems with precedence, we change the `and` into a `if the else`.
+That way, we can remove the `;` from the code.
+
+    _=1
+    __={}
+    --_ * "#{#"  * 1 // 1 if False else """"
+    --_ || //}".to_i
+    --_
 
 #### :: Javascript interpolation
 
