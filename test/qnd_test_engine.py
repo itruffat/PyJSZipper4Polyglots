@@ -61,13 +61,13 @@ def compare_outputs(test_path, test_lua, test_ruby):
 
             template = "templates/"
             if test_ruby:
-                template += "four.zipped.template"
+                template += "five.zipped.template"
             elif test_lua:
                 template += "three.zipped.template"
             else:
                 template += "two.zipped.template"
 
-            answer = create_zipper(py_path, js_path,lua_path, ruby_path, template)
+            answer = create_zipper(py_path, js_path,lua_path, ruby_path, "", template)
             temp_file.write(answer)
             temp_file.flush()
 
@@ -168,6 +168,7 @@ def double_test():
         "test/cases/edgecases.js",
         "test/cases/edgecases.lua",
         "test/cases/edgecases.rb",
+        "",
         "templates/four.zipped.template")
 
     with tempfile.NamedTemporaryFile(mode='w+', suffix=".js", delete=True) as temp_file:
@@ -178,6 +179,7 @@ def double_test():
                 temp_file.name,
                 temp_file.name,
                 temp_file.name,
+                "",
                 "templates/four.zipped.template")
 
     with tempfile.NamedTemporaryFile(mode='w+', suffix=".js", delete=True) as temp_file:
@@ -213,18 +215,19 @@ if __name__ == "__main__":
         exit(error_code)
     else:
         if sys.argv[1] == "python":
-            print(create_zipper("test/cases/edgecases.py","","","","test/faux_templates/python.template"))
+            print(create_zipper("test/cases/edgecases.py","","","","","test/faux_templates/python.template"))
         if sys.argv[1] == "javascript":
-            print(create_zipper("","test/cases/edgecases.js","","","test/faux_templates/js.template"))
+            print(create_zipper("","test/cases/edgecases.js","","","","test/faux_templates/js.template"))
         if sys.argv[1] == "lua":
-            print(create_zipper("","","test/cases/edgecases.lua","","test/faux_templates/lua.template"))
+            print(create_zipper("","","test/cases/edgecases.lua","","","test/faux_templates/lua.template"))
         if sys.argv[1] == "ruby":
-            print(create_zipper("","","","test/cases/edgecases.rb","test/faux_templates/ruby.template"))
+            print(create_zipper("","","","test/cases/edgecases.rb","","test/faux_templates/ruby.template"))
         if sys.argv[1] == "four":
             print(create_zipper("test/cases/edgecases.py",
                                 "test/cases/edgecases.js",
                                 "test/cases/edgecases.lua",
                                 "test/cases/edgecases.rb",
+                                "",
                                 "templates/four.zipped.template")
                   )
 

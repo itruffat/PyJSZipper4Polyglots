@@ -7,22 +7,25 @@ def get_input():
     parser = argparse.ArgumentParser(description="Process two files into one.")
     parser.add_argument("python_file", nargs="?", help="Path to the python file")
     parser.add_argument("js_file", nargs="?", help="Path to the javascript file")
-    parser.add_argument("lua_file", nargs="?", help="Path to the python file")
-    parser.add_argument("ruby_file", nargs="?", help="Path to the javascript file")
+    parser.add_argument("lua_file", nargs="?", help="Path to the lua file")
+    parser.add_argument("ruby_file", nargs="?", default='', help="Path to the ruby file")
+    parser.add_argument("bash_file", nargs="?", default='' , help="Path to the bash file")
     parser.add_argument("--output", default="", help="Optional output file path")
     args = parser.parse_args()
 
-    _python_file = args.python_file if args.python_file else input("Enter the path for the first file: ").strip()
-    _js_file = args.js_file if args.js_file else input("Enter the path for the second file: ").strip()
+    _python_file = args.python_file if args.python_file else input("Enter the path for the python file: ").strip()
+    _js_file = args.js_file if args.js_file else input("Enter the path for the js file: ").strip()
     _lua_file = args.lua_file if args.lua_file else input("Enter the path for the third file: ").strip()
     _ruby_file = args.ruby_file if args.ruby_file else input("Enter the path for the fourth file: ").strip()
+    _bash_file = args.bash_file if args.bash_file else input("Enter the path for the fifth file: ").strip()
     _output = args.output if args.output else None
 
-    return _python_file, _js_file, _lua_file, _ruby_file, _output
+    return _python_file, _js_file, _lua_file, _ruby_file, _bash_file, _output
 
 
 def profile_template(template_file):
-    languages = [('python','<PYTHON CODE>'),('lua', '<LUA CODE>'),('javascript','<JS CODE>'), ("ruby","<RUBY CODE>")]
+    languages = [('python','<PYTHON CODE>'),('lua', '<LUA CODE>'),('javascript','<JS CODE>'), ("ruby","<RUBY CODE>"),
+                 ('bash', '<BASH CODE>')]
     profile = {}
     with open(template_file, "r") as template:
         template_str = template.read()
@@ -46,7 +49,7 @@ def profile_template(template_file):
     return sorted_profile
 
 
-def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
+def create_zipper(python_file, js_file, lua_file, ruby_file, bash_file, template_file):
 
     profile = profile_template(template_file)
 
@@ -54,6 +57,8 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
         template_str = template.read()
 
     ruby_token = "ruby_long_string" if "ruby" in profile else ""
+    bash_token = "bash_long_string" if "bash" in profile else ""
+
     parts = template_str.split("<DIVISION>")
 
     code = []
@@ -70,6 +75,7 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
             python_code = python_code.replace("*/", "\\x2A/")
             python_code = python_code.replace(']===]', ']=\\x3D=]')
             python_code = generic_token_replacement(python_code, "py", ruby_token)
+            python_code = generic_token_replacement(python_code, "py", bash_token)
             code.append(current_part.replace("<PYTHON CODE>", python_code))
 
 
@@ -83,6 +89,7 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
             js_code = js_code.replace('"""', '\\x22\\x22\\x22')
             js_code = js_code.replace(']===]', ']=\\x3D=]')
             js_code = generic_token_replacement(js_code, "javascript", ruby_token)
+            js_code = generic_token_replacement(js_code, "javascript", bash_token)
             code.append(current_part.replace("<JS CODE>", js_code))
 
         elif language == "lua":
@@ -95,6 +102,7 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
             lua_code = lua_code.replace('"""', '\\x22\\x22\\x22')
             lua_code = lua_code.replace("*/", "\\x2A/")
             lua_code = generic_token_replacement(lua_code, "lua", ruby_token)
+            lua_code = generic_token_replacement(lua_code, "lua", bash_token)
             code.append(current_part.replace("<LUA CODE>", lua_code))
 
         elif language == "ruby":
@@ -177,8 +185,31 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
             # Replace JS end, inside Strings
             ruby_code = ruby_code.replace("*/", "\\x2A/")
+            ruby_code = generic_token_replacement(ruby_code, "ruby", bash_token)
 
             code.append(current_part.replace("<RUBY CODE>", ruby_code))
+
+        elif language == "bash":
+            if bash_file != '':
+                with open(bash_file, "r") as _bash_file:
+                    bash_code = _bash_file.read()
+            else:
+                bash_code = ''
+
+            bash_code, _ = reformat_strings_and_replace_tokens(
+                bash_code, "bash",
+                '"""',
+                "'",
+                '"""',
+                '"\'\'"\'\'"',
+                False,
+                [])
+
+            bash_code = bash_code.replace('"""', '\\x22\\x22\\x22')
+            bash_code = bash_code.replace(']===]', ']=\\x3D=]')
+            bash_code = bash_code.replace("*/", "\\x2A/")
+            bash_code = generic_token_replacement(bash_code, "bash", ruby_token)
+            code.append(current_part.replace("<BASH CODE>", bash_code))
 
         else:
             raise Exception(f"ZIPPER ERROR: Invalid language ({language})")
@@ -187,14 +218,16 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
 
 if __name__ == "__main__":
-    py_path, js_path, l_file, r_file, output = get_input()
+    py_path, js_path, l_file, r_file, sh_file, output = get_input()
 
     if len(l_file) == 0 or l_file in ['""',"''"]:
-        answer = create_zipper(py_path, js_path, l_file, r_file,"templates/two.zipped.template")
+        answer = create_zipper(py_path, js_path, l_file, r_file,"","templates/two.zipped.template")
     elif len(r_file) == 0 or r_file in ['""', "''"]:
-        answer = create_zipper(py_path, js_path, l_file, r_file, "templates/three.zipped.template")
+        answer = create_zipper(py_path, js_path, l_file, r_file, "","templates/three.zipped.template")
+    elif len(sh_file) == 0 or sh_file in ['""', "''"]:
+        answer = create_zipper(py_path, js_path, l_file, r_file, "","templates/four.zipped.template")
     else:
-        answer = create_zipper(py_path, js_path, l_file, r_file, "templates/four.zipped.template")
+        answer = create_zipper(py_path, js_path, l_file, r_file, sh_file, "templates/five.zipped.template")
 
     with open(output, "w") if output else sys.stdout as out_file:
         out_file.write(answer)

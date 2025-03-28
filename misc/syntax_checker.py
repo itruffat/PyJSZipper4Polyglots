@@ -6,7 +6,8 @@ check_commands = {
     'py': ["python3", "-m", "py_compile"],
     'ruby':["ruby", "-c"],
     'javascript':["node", "--check"],
-    'lua': ["luac", "-p"]
+    'lua': ["luac", "-p"],
+    'bash': ["bash", "-n"]
 }
 
 def check_syntax(language:str, _filename:str) -> bool:
