@@ -1,3 +1,4 @@
+~~~ TEMPLATE FOR PYTHON, JS, LUA AND RUBY
 _=1
 __={}
 --_ * "#{#"  * 1 // 1 if False else """"

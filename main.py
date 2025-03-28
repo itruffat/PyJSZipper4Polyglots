@@ -7,16 +7,19 @@ def get_input():
     parser = argparse.ArgumentParser(description="Process two files into one.")
     parser.add_argument("python_file", nargs="?", help="Path to the python file")
     parser.add_argument("js_file", nargs="?", help="Path to the javascript file")
-    parser.add_argument("lua_file", nargs="?", help="Path to the python file")
-    parser.add_argument("ruby_file", nargs="?", help="Path to the javascript file")
-    parser.add_argument("--output", default="", help="Optional output file path")
+    parser.add_argument("lua_file", default="", nargs="?", help="Path to the python file")
+    parser.add_argument("ruby_file", default="", nargs="?", help="Path to the javascript file")
+    parser.add_argument("--output", default=None, help="Optional output file path")
     args = parser.parse_args()
 
     _python_file = args.python_file if args.python_file else input("Enter the path for the first file: ").strip()
     _js_file = args.js_file if args.js_file else input("Enter the path for the second file: ").strip()
-    _lua_file = args.lua_file if args.lua_file else input("Enter the path for the third file: ").strip()
-    _ruby_file = args.ruby_file if args.ruby_file else input("Enter the path for the fourth file: ").strip()
-    _output = args.output if args.output else None
+    _lua_file = args.lua_file
+    _ruby_file = args.ruby_file
+    _output = args.output
+
+    if not all([_js_file, _python_file]) or (_ruby_file and not _lua_file):
+        raise Exception("Invalid input")
 
     return _python_file, _js_file, _lua_file, _ruby_file, _output
 
@@ -52,6 +55,8 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 
     with open(template_file, "r") as template:
         template_str = template.read()
+        if template_str[0] == "~":
+            template_str = '\n'.join(template_str.split('\n')[1:])
 
     ruby_token = "ruby_long_string" if "ruby" in profile else ""
     parts = template_str.split("<DIVISION>")
@@ -189,12 +194,17 @@ def create_zipper(python_file, js_file, lua_file, ruby_file, template_file):
 if __name__ == "__main__":
     py_path, js_path, l_file, r_file, output = get_input()
 
-    if len(l_file) == 0 or l_file in ['""',"''"]:
-        answer = create_zipper(py_path, js_path, l_file, r_file,"templates/two.zipped.template")
-    elif len(r_file) == 0 or r_file in ['""', "''"]:
-        answer = create_zipper(py_path, js_path, l_file, r_file, "templates/three.zipped.template")
-    else:
-        answer = create_zipper(py_path, js_path, l_file, r_file, "templates/four.zipped.template")
+    match [l_file, r_file]:
+        case ['', '']:
+            template = "templates/two.zipped.template"
+        case [_, '']:
+            template = "templates/three.zipped.template"
+        case[_, _]:
+            template = "templates/four.zipped.template"
+        case _:
+            template = ""
+
+    answer = create_zipper(py_path, js_path, l_file, r_file, template)
 
     with open(output, "w") if output else sys.stdout as out_file:
         out_file.write(answer)

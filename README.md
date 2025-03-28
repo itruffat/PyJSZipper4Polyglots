@@ -3,36 +3,36 @@
 
 # Introduction
 
-Inspired by [this youtube video](https://www.youtube.com/watch?v=dbf9e7okjm8), I decided to tackle the problem of 
-encoding one python program + one javascript program in a single file that can be run by the interpreters of both 
-languages. 
+Inspired by [this YouTube video](https://www.youtube.com/watch?v=dbf9e7okjm8), I set out to solve the problem of 
+encoding both a Python and a JavaScript program in a single file that can be executed by the interpreters of both 
+languages.
 
-When the original sources that were encoded happens to do the same thing in both languages, then the result can be
-described as a polyglot program. Since comments are used to mask the second implementation (instead of trying to find a
-common syntax that would work for both languages and solve the problem using that syntax), this solution is called a
-zipper.
+The goal behind this technique is to create a program that performs the same function in both languages, resulting in 
+what’s known as a 'polyglot' program. Rather than trying to find a common syntax that works for both languages, we 
+carefully design the file so that one language's implementation is ignored by the other. This method is referred to as a
+"zipper."
 
-In the end I also added LUA and Ruby to the equation, having 3 different templates.
+As the challenge grew more exciting, I decided to expand the project further, adding LUA and Ruby, which gave us three 
+different combinations to work with. (PY+JS, PY+JS+LUA and PY+JS+LUA+RB)
 
 # How to Use
 
-    Pythone main.ppy <Python File> <Js File> <Lua File> <RubyFile>
+    Python3 main.py <Python File> <Js File> [<Lua File>] [<RubyFile>] --output [output_file]
 
-> If you want to run only Python/JS or only Python/Js/Lua you can do the following...
+> Both Lua and Ruby files are optional. Lua is only necessary if you wish to run the program with Ruby as well.
+> 
+> The output file is also optional. If no output file is provided, the output will be redirected to stdout.
 
-    Pythone main.ppy <Python File> <Js File> <Lua File> ''
-    Pythone main.ppy <Python File> <Js File> '' ''
 
 ## Goals
 
-The goal of this repo is to be as straight-forward and use as little `eval`/`exec`/`;` as possible. Additionally, the 
-code bases should be callable with as little restrictions as possible. 
+The goal of this repository is to keep things as straightforward as possible, minimizing the use of `eval`, `exec`, and 
+`;`. Furthermore, the codebases should be callable with minimal restrictions.
 
-The creation of the output file should be the one to the care of most edge cases, meaning that most programs should run
-ok. Some exceptions are to be expected, for example all self-referencing files are going to fail, and files that use
-`exec` or `eval` may fail as well. Additionally, some Ruby regex may fail their identity function after creation. All 
-these are considered acceptable looses.
-
+The creation of the output file is designed to handle most edge cases, ensuring that most programs run correctly. 
+However, some exceptions may occur. For instance, self-referencing files will fail, and files that rely on exec or eval 
+might not work. Additionally, certain Ruby regex may fail their identity function after being created. These are all 
+considered acceptable trade-offs.
 
 -----
 
@@ -281,7 +281,7 @@ Ruby is a fairly straightforward language, similar to the previous 3 we worked w
 for us as it will allow us to recycle previously used tricks. Additionally, `--{variable}` is interpreted by Ruby in the 
 same way as in Python (`-1*-1*{variable}`), meaning that's another trick we can recycle.
 
-However, there are some of the unique syntactical properties of Ruby does make our job harder. In particular, in this 
+However, some of the unique syntactical properties of Ruby make our job harder. In particular, the fact that in this 
 language `//` is a way to define a regex, not a division or any other operation like that. While regex can be defined 
 with a variable name for other languages (such as `//x` or `//i`) there is no way to add a value BEFORE the regex. This 
 means that our Python+JS technique of using `1 // 1`  will not be available outside of Ruby comments. 
