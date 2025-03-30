@@ -220,7 +220,7 @@ if __name__ == "__main__":
             print(create_zipper("","","test/cases/edgecases.lua","","test/faux_templates/lua.template"))
         if sys.argv[1] == "ruby":
             print(create_zipper("","","","test/cases/edgecases.rb","test/faux_templates/ruby.template"))
-        if sys.argv[1] == "four":
+        if sys.argv[1] == "all":
             print(create_zipper("test/cases/edgecases.py",
                                 "test/cases/edgecases.js",
                                 "test/cases/edgecases.lua",
