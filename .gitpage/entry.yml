@@ -1,0 +1,7 @@
+name: Four Languages Zipper 
+category: Misc
+skip: False
+description : |
+  Focused on creating Polyglots (programs that can run on multiple interpreters), this repo can create a file to be read by up to 4 languages - Python, Javascript, Lua and Ruby!
+  Functionality-wise, the zipper picks up programs in their original languages and then combines them in a very precise way so that the result will be valid in all languages.
+  Not a very useful thing, but a really cool one!
